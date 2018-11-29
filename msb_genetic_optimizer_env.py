@@ -4,14 +4,15 @@ import gym_super_mario_bros.actions
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
 import numpy as np
 import cPickle as pickle
+from abc import ABCMeta, abstractmethod
 
 
-
+#MSBGeneticOptimizerEnv contains boilerplate code for the project, shouldn't need to modify this
+#If you do let me know or make a PR and I can fix it so that others have updated code too
 class MSBGeneticOptimizerEnv(object):
 	"""An environment wrapper for genetically optimizing mario smash brothers simulation ."""
 
 	def __init__(self, max_steps=10000, num_genes=4, action_encoding=SIMPLE_MOVEMENT, render=False, reward="score", session_file=""):
-		print 'super max steps: {}'.format(max_steps)
 		if session_file != "":
 			self.load_optimizer(session_file)
 		else: 
@@ -78,7 +79,7 @@ class MSBGeneticOptimizerEnv(object):
 
 		return max_reward, max_reward_ix
 
-
+	@abstractmethod
 	def perform_selection(self):
 		"""
 		Based on a chromosomes structure, updates the chromosomes by natural selection rules
