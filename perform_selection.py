@@ -1,4 +1,4 @@
-from msb_genetic_optimizer import MSBGeneticOptimizerEnv
+from msb_genetic_optimizer_env import MSBGeneticOptimizerEnv
 
 
 ##The below class inherits everything from MSBGeneticOptimizerEnv, all you will need to do is modi
