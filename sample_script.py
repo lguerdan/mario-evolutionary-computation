@@ -3,10 +3,10 @@ from perform_selection import SelectionEnv
 
 
 #create a new optimizer environment and initialize data structure
-optimizer = SelectionEnv(max_steps = 500, num_genes=6, render=True)
+optimizer = SelectionEnv(max_steps = 800, num_genes=2, render=True)
 
 #run the optimizer for the desired number of times
-optimizer.run_generations(3)
+optimizer.run_generations(1)
 
 #serialize the data structure to a file. Pickle for effeciency 
 optimizer.save_optimizer('mario-4-chromosome.p')

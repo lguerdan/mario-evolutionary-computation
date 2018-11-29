@@ -125,13 +125,24 @@ class MSBGeneticOptimizerEnv(object):
 			#Main evaluation loop for this chromosome
 			for step, action in enumerate(chromosome[0]):
 				
-				if done: state = self.env.reset()
+				#rest new environment
+				if done: 
+					state = self.env.reset()
 
+				#take step
 				state, reward, done, info = self.env.step(action)
+				
+				#died
+				if info['life'] < 3:
+					break
+
+				#print progress
 				if step % 50 == 0:
 					print('chromosome: {}, step: {}, action: {}, info: {}'.format(chromosome_num, step, action, info))
 				
-				if self.render: self.env.render()
+				#display on screen
+				if self.render: 
+					self.env.render()
 
 			self.chromosomes[chromosome_num][1] = info[self.reward]
 			print('chromosome {} done. {} reward = {}\n'.format(chromosome_num, self.reward, info[self.reward]))
