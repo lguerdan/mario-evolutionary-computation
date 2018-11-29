@@ -7,7 +7,7 @@ First, see the [simulator module](https://github.com/lguerdan/gym-super-mario-br
 An python list of lists, where each list entry corresponds to a chromosome and its award
 
 The initial numpy array corresponds to the chromosome: 
-It will be max_steps long and each value will be in the range: 0 -> max step
+It will be `max_steps` long and each value will be in the range: `0 -> max(ACTION_ENCODING)`
 Not yet evaluated chromosomes have an award of -1
 ```
 [
