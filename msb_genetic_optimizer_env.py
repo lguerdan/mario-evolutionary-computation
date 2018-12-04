@@ -3,7 +3,10 @@ import gym_super_mario_bros
 import gym_super_mario_bros.actions 
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
 import numpy as np
-import cPickle as pickle
+try:
+   import cPickle as pickle
+except:
+   import pickle
 from abc import ABCMeta, abstractmethod
 
 
