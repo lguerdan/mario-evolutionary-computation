@@ -49,7 +49,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
             return max(1 - max(x, -x), 0)
 
         point_range_max = min(len(parent1[0]), len(parent2[0])) if not points_before_death \
-            else min(parent1[2], parent2[2])
+            else max(parent1[2], parent2[2])
         random = np.random.rand if not normal_dist else positive_normal
 
         crossover_points = [point_range_max]
