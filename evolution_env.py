@@ -16,15 +16,16 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
         """
         #
         parents = self.select_parents()
-        children = []
+        offspring = []
 
         for (parent1, parent2) in parents:
-            children.extend(self.crossover_chromosome_pair(parent1, parent2))
+            offspring.extend(self.crossover_chromosome_pair(parent1, parent2))
 
-        for chromosome in children:
+        for chromosome in offspring:
             self.mutate_chromosome(chromosome, mutations=5)
 
-        self.chromosomes = children
+        # Using only offspring to populate new generation here
+        self.chromosomes = offspring
 
     ###
     #	Basic implementation of parent selection, with chromosomes shuffled then returned in pairs
@@ -61,12 +62,9 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
         while len(crossover_points) > 1:
             point1 = crossover_points.pop()
             point2 = crossover_points.pop()
-            # temp = (parent1[0][point1:point2]).copy()
             child1[0][point1:point2] = parent2[0][point1:point2]
             child2[0][point1:point2] = parent1[0][point1:point2]
 
-        # parent1[1], parent1[2] = -1
-        # parent2[1], parent2[2] = -1
         return [child1, child2]
 
     ###
