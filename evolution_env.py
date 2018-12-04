@@ -58,12 +58,12 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
             crossover_points.append(round(point_range_max * random()))
         crossover_points.sort(reverse=True)
 
-        child1, child2 = [parent1[0], -1, -1], [parent2[0], -1, -1]
+        child1, child2 = [parent1[0].copy(), -1, -1], [parent2[0].copy(), -1, -1]
         while len(crossover_points) > 1:
             point1 = crossover_points.pop()
             point2 = crossover_points.pop()
-            child1[0][point1:point2] = parent2[0][point1:point2]
-            child2[0][point1:point2] = parent1[0][point1:point2]
+            child1[0][point1:point2] = parent2[0][point1:point2].copy()
+            child2[0][point1:point2] = parent1[0][point1:point2].copy()
 
         return [child1, child2]
 
