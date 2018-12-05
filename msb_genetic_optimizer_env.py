@@ -1,3 +1,4 @@
+from __future__ import print_function
 from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
 import gym_super_mario_bros
 import gym_super_mario_bros.actions 
@@ -35,18 +36,18 @@ class MSBGeneticOptimizerEnv(object):
 	def init_chromosomes(self):
 		"""Creates a new set of genes based on the number of parents fed in"""
 		self.chromosomes = []
-		for i in xrange(self.num_chromosomes):
+		for i in range(self.num_chromosomes):
 			chromosome = [np.random.randint(0,len(self.action_encoding), self.max_steps), -1, -1]
 			self.chromosomes.append(chromosome)
 
 	def save_optimizer(self, fname):
-		print "saving optimizer state to {}".format(fname)
+		print("saving optimizer state to ",fname)
 		optimizer_state = Optimizer(self.max_steps, self.num_chromosomes, self.action_encoding, self.render, self.fitness_strategy, self.chromosomes)
 		with open(fname, "wb") as f:
 			pickle.dump(optimizer_state, f)
 
 	def load_optimizer(self, fname):
-		print "loading optimier state from {}\n\n".format(fname)
+		print("loading optimier state from ",fname)
 		with open(fname, "rb") as f:
 			optimizer = pickle.load(f)
 			self.max_steps = optimizer.max_steps
@@ -61,14 +62,14 @@ class MSBGeneticOptimizerEnv(object):
 
 	def run_generations(self, ngens):
 
-		for gen in xrange(ngens):
+		for gen in range(ngens):
 			self.evaluate_chromosomes()
 			self.new_generation()
 			max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
-			print "\n#################################"
-			print "GENERATION {} COMPLETE".format(gen)
-			print "Highest chromosome: {}, fitness: {}".format(max_fitness_ix, max_fitness)
-			print "####################################\n\n\n"
+			print("\n#################################")
+			print("GENERATION",gen,"COMPLETE")
+			print("Highest chromosome: ",max_fitness_ix,", fitness:",max_fitness)
+			print("####################################\n\n\n")
 
 	def get_max_fitness_chromosome(self):
 		"""returns highest fitness of current chromosomes, along with its index"""
@@ -142,7 +143,7 @@ class MSBGeneticOptimizerEnv(object):
 
 				#print progress
 				if step % 50 == 0:
-					print "chromosome: {}, step: {}, action: {}, info: {}".format(chromosome_num, step, action, info)
+					print("chromosome:",chromosome_num," step:", step," action:",action, "info:",info)
 				
 				#display on screen
 				if self.render: 
@@ -150,7 +151,7 @@ class MSBGeneticOptimizerEnv(object):
 
 			self.chromosomes[chromosome_num][1] = info[self.fitness_strategy]
 			self.chromosomes[chromosome_num][2] = step
-			print "chromosome {} done. {} fitness = {}\n".format(chromosome_num, self.fitness_strategy, info[self.fitness_strategy])
+			print("chromosome ",chromosome_num," done fitness ",self.fitness_strategy ,"= ",info[self.fitness_strategy])
 
 
 	def __del__(self):
