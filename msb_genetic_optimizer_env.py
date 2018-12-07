@@ -1,16 +1,21 @@
 from __future__ import print_function
+
+import multiprocessing, time, functools, gym_super_mario_bros, os, csv
+
 from multiprocessing import Pool
-import multiprocessing, time, functools, gym_super_mario_bros
 from contextlib import contextmanager
 from itertools import product
 from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
+from abc import ABCMeta, abstractmethod
+
+import pandas as pd
 import numpy as np
+
 try:
    import cPickle as pickle
 except:
    import pickle
-from abc import ABCMeta, abstractmethod
 
 
 #MSBGeneticOptimizerEnv contains boilerplate code for the project, shouldn't need to modify this
@@ -62,12 +67,29 @@ class MSBGeneticOptimizerEnv(object):
 			self.noFrameSkip = optimizer.noFrameSkip
 
 
-	def run_generations(self, ngens):
+	def run_generations(self, ngens, fname):
+
+		headers = ['generation', 'chromosome_num', self.fitness_strategy]
+		
+		#If logging for the first time, set up csv file
+		if fname:
+			print("logging progress to " + fname)
+
+			with open (fname, 'w') as csvfile:
+				writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n',fieldnames=headers)
+				writer.writeheader() 
 
 		for gen in range(ngens):
 			self.evaluate_chromosomes()
 			self.new_generation()
 			max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
+
+			#If writing progress to output, add this generation
+			if fname:
+				with open (fname, 'a') as csvfile:
+					writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n',fieldnames=headers)
+					writer.writerow({'generation': gen, 'chromosome_num': max_fitness_ix, self.fitness_strategy: max_fitness})
+
 			print("\n#################################")
 			print("GENERATION",gen,"COMPLETE")
 			print("Highest chromosome: ",max_fitness_ix,", fitness:",max_fitness)
