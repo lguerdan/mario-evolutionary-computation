@@ -1,7 +1,9 @@
 from __future__ import print_function
+from multiprocessing import Pool
+import multiprocessing, time, functools, gym_super_mario_bros
+from contextlib import contextmanager
+from itertools import product
 from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
-import gym_super_mario_bros
-import gym_super_mario_bros.actions 
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
 import numpy as np
 try:
@@ -16,7 +18,7 @@ from abc import ABCMeta, abstractmethod
 class MSBGeneticOptimizerEnv(object):
 	"""An environment wrapper for genetically optimizing mario smash brothers simulation ."""
 
-	def __init__(self, max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, fitness_strategy="score", session_file=""):
+	def __init__(self, max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, fitness_strategy="x_pos", session_file="", world=1, stage=1, version=0, noFrameSkip=False):
 		if session_file != "":
 			self.load_optimizer(session_file)
 		else: 
@@ -25,13 +27,11 @@ class MSBGeneticOptimizerEnv(object):
 			self.render = render
 			self.fitness_strategy = fitness_strategy  #score, x_pos, time, coins
 			self.num_chromosomes = num_chromosomes
+			self.world = world
+			self.stage = stage
+			self.version = version
+			self.noFrameSkip = 'NoFrameskip' if noFrameSkip else ''
 			self.init_chromosomes()
-
-		self.init_simulator_env()
-
-	def init_simulator_env(self):
-		env = gym_super_mario_bros.make('SuperMarioBros-v0')
-		self.env = BinarySpaceToDiscreteSpaceEnv(env, self.action_encoding)
 
 	def init_chromosomes(self):
 		"""Creates a new set of genes based on the number of parents fed in"""
@@ -42,7 +42,7 @@ class MSBGeneticOptimizerEnv(object):
 
 	def save_optimizer(self, fname):
 		print("saving optimizer state to ",fname)
-		optimizer_state = Optimizer(self.max_steps, self.num_chromosomes, self.action_encoding, self.render, self.fitness_strategy, self.chromosomes)
+		optimizer_state = Optimizer(self.max_steps, self.num_chromosomes, self.action_encoding, self.render, self.fitness_strategy, self.chromosomes, self.world, self.stage, self.version, self.noFrameSkip)
 		with open(fname, "wb") as f:
 			pickle.dump(optimizer_state, f)
 
@@ -56,9 +56,11 @@ class MSBGeneticOptimizerEnv(object):
 			self.fitness_strategy = optimizer.fitness_strategy
 			self.num_chromosomes = optimizer.num_chromosomes
 			self.chromosomes = optimizer.chromosomes
+			self.world = optimizer.world
+			self.stage = optimizer.stage
+			self.version = optimizer.version
+			self.noFrameSkip = optimizer.noFrameSkip
 
-	def close_simulator_env(self):
-		self.env.close()
 
 	def run_generations(self, ngens):
 
@@ -70,6 +72,7 @@ class MSBGeneticOptimizerEnv(object):
 			print("GENERATION",gen,"COMPLETE")
 			print("Highest chromosome: ",max_fitness_ix,", fitness:",max_fitness)
 			print("####################################\n\n\n")
+
 
 	def get_max_fitness_chromosome(self):
 		"""returns highest fitness of current chromosomes, along with its index"""
@@ -105,14 +108,46 @@ class MSBGeneticOptimizerEnv(object):
 		if max_fitness == -1:
 			print('Run top chromosome error: no fitnesses have been computed')
 
-		done = True
-		for step, action in enumerate(self.chromosomes[max_fitness_ix][0]):
-				if done:
-					state = self.env.reset()
+		with mariocontext(self) as env:
+			done = True
+			for step, action in enumerate(self.chromosomes[max_fitness_ix][0]):
+					if done:
+						state = env.reset()
 
-				state, reward, done, info = self.env.step(action)
+					state, reward, done, info = env.step(action)
 
-				if render: self.env.render()
+					if render: env.render()
+
+
+	def evaluate_chromosome(self, input_tuple):
+		"""Evaluates a chromosome for it's fitness value and index of death"""
+
+		chromosome_num, chromosome = input_tuple
+		with mariocontext(self) as env:
+
+			state = env.reset()
+			#Main evaluation loop for this chromosome
+			for step, action in enumerate(chromosome[0]):
+
+				#take step
+				state, reward, done, info = env.step(action)
+
+				#died or level beat
+				if done: 
+					break
+
+				#print progress
+				if step % 50 == 0:
+					print("chromosome:",chromosome_num," step:", step," action:",action, "info:",info)
+				
+				#display on screen
+				if self.render: 
+					env.render()
+
+			chromosome[1], chromosome[2] = info[self.fitness_strategy], step
+
+			print("chromosome",chromosome_num," done fitness ",self.fitness_strategy ,"= ",info[self.fitness_strategy])
+			return chromosome
 
 
 	def evaluate_chromosomes(self):
@@ -123,49 +158,47 @@ class MSBGeneticOptimizerEnv(object):
 		Output: a gene structure with computed fitnesses and index of death
 		"""
 
-		for chromosome_num, chromosome in enumerate(self.chromosomes):
-			done = True
-			step_died = -1
-			#Main evaluation loop for this chromosome
-			for step, action in enumerate(chromosome[0]):
-				
-				#rest new environment
-				if done: 
-					state = self.env.reset()
-
-				#take step
-				state, reward, done, info = self.env.step(action)
-				
-				#died
-				if info['life'] < 3:
-					step_died = step
-					break
-
-				#print progress
-				if step % 50 == 0:
-					print("chromosome:",chromosome_num," step:", step," action:",action, "info:",info)
-				
-				#display on screen
-				if self.render: 
-					self.env.render()
-
-			self.chromosomes[chromosome_num][1] = info[self.fitness_strategy]
-			self.chromosomes[chromosome_num][2] = step
-			print("chromosome ",chromosome_num," done fitness ",self.fitness_strategy ,"= ",info[self.fitness_strategy])
-
-
-	def __del__(self):
-		"""close out of AI gym environment"""
-		self.close_simulator_env()
+		bound_instance_method_alias = functools.partial(_instance_method_alias, self)
+		with poolcontext(multiprocessing.cpu_count()) as pool:
+			self.chromosomes = pool.map(bound_instance_method_alias, enumerate(self.chromosomes))
 
 
 class Optimizer():
 	"""A basic container class for saving optimizer contents"""
 
-	def __init__(self, max_steps, num_chromosomes, action_encoding, render, fitness_strategy, chromosomes):
+	def __init__(self, max_steps, num_chromosomes, action_encoding, render, fitness_strategy, chromosomes, world, stage, version, noFrameSkip):
 		self.max_steps = max_steps
 		self.num_chromosomes = num_chromosomes
 		self.action_encoding = action_encoding
 		self.render = render
 		self.fitness_strategy = fitness_strategy
 		self.chromosomes = chromosomes
+		self.world = world
+		self.stage = stage
+		self.version = version
+		self.noFrameSkip = noFrameSkip
+
+
+@contextmanager
+def poolcontext(*args, **kwargs):
+	pool = multiprocessing.Pool(*args, **kwargs)
+	yield pool
+	pool.terminate()
+
+@contextmanager
+def mariocontext(marioEnv):
+	mario_env = 'SuperMarioBros' + marioEnv.noFrameSkip + '-' + str(marioEnv.world) + '-' + str(marioEnv.stage) + '-v' + str(marioEnv.version)
+	env = gym_super_mario_bros.make(mario_env)
+	env = BinarySpaceToDiscreteSpaceEnv(env, marioEnv.action_encoding)
+	yield env
+	env.close()
+
+
+def _instance_method_alias(obj, arg):
+	"""
+	Alias for instance method that allows the method to be called in a 
+	multiprocessing pool
+	"""
+	return obj.evaluate_chromosome(arg)
+
+

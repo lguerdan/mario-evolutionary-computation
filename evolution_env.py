@@ -9,6 +9,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
         super(EvolutionEnv, self).__init__(*args, **kwargs)
 
     def new_generation(self):
+        return
         """
         Based on a chromosomes structure, updates the chromosomes by natural selection rules
         This is where the bulk of the evolutionary computation code will go
