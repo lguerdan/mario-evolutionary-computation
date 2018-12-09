@@ -14,30 +14,55 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
         This is where the bulk of the evolutionary computation code will go
         We will need to modify the chromosome structure in some
         """
-        #
-        parents = self.select_parents()
+        
+        #tournament selection for parent
+        parents = self.select_parents(1, int(self.num_chromosomes/2))
         offspring = []
 
-        for (parent1, parent2) in parents:
-            offspring.extend(self.crossover_chromosome_pair(parent1, parent2))
+        # Crossover
+        #for (parent1, parent2) in parents:
+        #    offspring.extend(self.crossover_chromosome_pair(parent1, parent2, points_before_death=False))
+        
+        # Mutation
+        #using lambda = mu (numberof parents equal to the number of offsprings)
+        #For each selected parent, will mutate around 20% of the max_steps actions
+        mutations = round(0.2 * self.max_steps)
+        for chromosome in parents:
+            child = [chromosome[0].copy(), -1, chromosome[2]]
+            self.mutate_chromosome(child, mutations)
+            offspring.append(child)
+        
+        # (mu, lambda) Using only offspring to populate new generation here
+        #self.chromosomes = offspring
 
-        for chromosome in offspring:
-            self.mutate_chromosome(chromosome, mutations=5)
-
-        # Using only offspring to populate new generation here
-        self.chromosomes = offspring
+        # (mu + lambda) Using parents + offspring to populate new generation here
+        self.chromosomes = parents + offspring
 
     ###
-    #	Basic implementation of parent selection, with chromosomes shuffled then returned in pairs
+    # Basic implementation of parent selection, with chromosomes shuffled then returned in pairs
+    # Selection_type: 0: shuffle, 1: tournament
     ###
-    def select_parents(self):
-        np.random.shuffle(self.chromosomes)
-        parents = []
-        for i in range(int(len(self.chromosomes) / 2)):
-            parents.append((self.chromosomes[2 * i], self.chromosomes[2 * i + 1]))
-
-        return parents
-
+    def select_parents(self, selection_type=0, mu=1):
+        def shuffle_selection():
+            np.random.shuffle(self.chromosomes)
+            parents = []
+            for i in range(int(len(self.chromosomes) / 2)):
+                parents.append((self.chromosomes[2 * i], self.chromosomes[2 * i + 1]))
+            return parents
+        def tournament_selection(mu):
+            parents = []
+            #select mu best chromosomes
+            best_chromosomes_index = sorted(range(len(self.chromosomes)), key=lambda x: self.chromosomes[x][1], reverse=True)
+            #delete from chromosome list if it is not within the mu best
+            for i in range(mu):
+                parents.append(self.chromosomes[best_chromosomes_index[i]])
+            return parents
+       
+        if selection_type == 0:
+            return shuffle_selection()
+        elif selection_type == 1:
+            return tournament_selection(mu)
+        
     ###
     #	Implementation of crossover functionality
     #	- points: number of points to use in crossover
@@ -68,11 +93,19 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
         return [child1, child2]
 
     ###
-    #	Basic implementation of mutation operator
-    #	- mutations: number of mutations to make, at randomly selected positions
+    # Implementation of mutation operator
+    # Mutations: number of mutations to make
     ###
     def mutate_chromosome(self, chromosome, mutations=1):
-        for _ in range(mutations):
-            mutation_point = 0  # round(np.random.rand() * len(chromosome[0]))
-            mutation = round(np.random.rand() * len(self.action_encoding))
-            chromosome[0][mutation_point] = mutation
+        for i in range(mutations):
+            #mutation index: triangular distribution with: bound left=0, bound right and mode=index of game over
+            mutation_index = int(np.ceil(np.random.triangular(left=0, mode=1, right=1) * chromosome[2]))
+            #new_action: random within the allowed possible actions
+            actions_size = len(self.action_encoding)
+            #new_action = np.random.randint(low=0, high=actions_size)
+            #new: prioritize actions between 1 to 4 (going right)
+            new_action = np.random.randint(low=0, high=(actions_size+4))
+            if (new_action >= actions_size):
+                new_action = new_action - actions_size + 1
+            chromosome[0][mutation_index] = new_action
+        chromosome[1], chromosome[2] = -1, -1
