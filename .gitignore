@@ -1,5 +1,5 @@
 *.pyc
 *.p
-
+*.csv
 
 .idea/

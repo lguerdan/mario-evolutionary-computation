@@ -44,6 +44,7 @@ class MSBGeneticOptimizerEnv(object):
 		for i in range(self.num_chromosomes):
 			chromosome = [np.random.randint(0,len(self.action_encoding), self.max_steps), -1, -1]
 			self.chromosomes.append(chromosome)
+		self.evaluate_chromosomes()
 
 	def save_optimizer(self, fname):
 		print("saving optimizer state to ",fname)
@@ -80,8 +81,8 @@ class MSBGeneticOptimizerEnv(object):
 				writer.writeheader()
 
 		for gen in range(ngens):
-			self.evaluate_chromosomes()
 			self.new_generation()
+			self.evaluate_chromosomes()
 			max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
 
 			#If writing progress to output, add this generation
@@ -145,6 +146,10 @@ class MSBGeneticOptimizerEnv(object):
 		"""Evaluates a chromosome for it's fitness value and index of death"""
 
 		chromosome_num, chromosome = input_tuple
+
+		if chromosome[1] != -1:
+			return chromosome
+
 		with mariocontext(self) as env:
 
 			state = env.reset()
