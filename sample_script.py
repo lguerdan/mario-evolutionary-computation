@@ -5,10 +5,10 @@ from evolution_env import EvolutionEnv
 
 
 #create a new optimizer environment and initialize data structure
-optimizer = EvolutionEnv(max_steps = 1000, num_chromosomes=2)
+optimizer = EvolutionEnv(max_steps = 1000, num_chromosomes=20)
 
 #run the optimizer for the desired number of times
-optimizer.run_generations(6, 'fitness-values.csv')
+optimizer.run_generations(50, 'fitness-values.csv')
 
 #serialize the data structure to a file. Pickle for effeciency 
 optimizer.save_optimizer('mario-4-chromosome.p')

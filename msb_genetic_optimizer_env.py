@@ -26,7 +26,7 @@ class MSBGeneticOptimizerEnv(object):
 	def __init__(self, max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, fitness_strategy="x_pos", session_file="", world=1, stage=1, version=0, noFrameSkip=False):
 		if session_file != "":
 			self.load_optimizer(session_file)
-		else: 
+		else:
 			self.max_steps = max_steps
 			self.action_encoding = action_encoding
 			self.render = render
@@ -44,6 +44,7 @@ class MSBGeneticOptimizerEnv(object):
 		for i in range(self.num_chromosomes):
 			chromosome = [np.random.randint(0,len(self.action_encoding), self.max_steps), -1, -1]
 			self.chromosomes.append(chromosome)
+		self.evaluate_chromosomes()
 
 	def save_optimizer(self, fname):
 		print("saving optimizer state to ",fname)
@@ -70,18 +71,18 @@ class MSBGeneticOptimizerEnv(object):
 	def run_generations(self, ngens, fname):
 
 		headers = ['generation', 'chromosome_num', self.fitness_strategy]
-		
+
 		#If logging for the first time, set up csv file
 		if fname:
 			print("logging progress to " + fname)
 
 			with open (fname, 'w') as csvfile:
 				writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n',fieldnames=headers)
-				writer.writeheader() 
+				writer.writeheader()
 
 		for gen in range(ngens):
-			self.evaluate_chromosomes()
 			self.new_generation()
+			self.evaluate_chromosomes()
 			max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
 
 			#If writing progress to output, add this generation
@@ -116,13 +117,13 @@ class MSBGeneticOptimizerEnv(object):
 		Update here
 		"""
 		#
-		pass 
+		pass
 		# For now now selection occurs, just keep current chromosomes
 
 
 	def run_top_chromosome(self, render=False):
 		"""
-		Retrieve the best-performing chromosome and play it. 
+		Retrieve the best-performing chromosome and play it.
 		Override render argument in case only want to visualize on test round
 		"""
 		max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
@@ -145,6 +146,10 @@ class MSBGeneticOptimizerEnv(object):
 		"""Evaluates a chromosome for it's fitness value and index of death"""
 
 		chromosome_num, chromosome = input_tuple
+
+		if chromosome[1] != -1:
+			return chromosome
+
 		with mariocontext(self) as env:
 
 			state = env.reset()
@@ -155,15 +160,15 @@ class MSBGeneticOptimizerEnv(object):
 				state, reward, done, info = env.step(action)
 
 				#died or level beat
-				if done: 
+				if done:
 					break
 
 				#print progress
 				if step % 50 == 0:
 					print("chromosome:",chromosome_num," step:", step," action:",action, "info:",info)
-				
+
 				#display on screen
-				if self.render: 
+				if self.render:
 					env.render()
 
 			chromosome[1], chromosome[2] = info[self.fitness_strategy], step
@@ -218,7 +223,7 @@ def mariocontext(marioEnv):
 
 def _instance_method_alias(obj, arg):
 	"""
-	Alias for instance method that allows the method to be called in a 
+	Alias for instance method that allows the method to be called in a
 	multiprocessing pool
 	"""
 	return obj.evaluate_chromosome(arg)
