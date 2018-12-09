@@ -4,12 +4,12 @@ import numpy as np
 
 ##The below class inherits everything from MSBGeneticOptimizerEnv, all you will need to do is modi
 class EvolutionEnv(MSBGeneticOptimizerEnv):
-   # Arguments: max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, reward="score", session_file=""
-   def __init__(self, *args, **kwargs):
-      super(EvolutionEnv, self).__init__(*args, **kwargs)
+    # Arguments: max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, reward="score", session_file=""
+    def __init__(self, *args, **kwargs):
+        super(EvolutionEnv, self).__init__(*args, **kwargs)
 
-   def new_generation(self):
-      """
+    def new_generation(self):
+        """
         Based on a chromosomes structure, updates the chromosomes by natural selection rules
         This is where the bulk of the evolutionary computation code will go
         We will need to modify the chromosome structure in some
@@ -74,32 +74,23 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
             x = (np.random.randn() / 3)
             return max(1 - max(x, -x), 0)
 
-      point_range_max = min(len(parent1[0]), len(parent2[0])) if not points_before_death \
-         else max(parent1[2], parent2[2])
-      random = np.random.rand if not normal_dist else positive_normal
-      crossover_points = [point_range_max]
-      for i in range(point_num):
-         crossover_points.append(int(round(point_range_max * random())))
-      crossover_points.sort(reverse=True)
+        point_range_max = min(len(parent1[0]), len(parent2[0])) if not points_before_death \
+            else max(parent1[2], parent2[2])
+        random = np.random.rand if not normal_dist else positive_normal
+        
+        crossover_points = [point_range_max]
+        for i in range(point_num):
+            crossover_points.append(int(round(point_range_max * random())))
+        crossover_points.sort(reverse=True)
 
-      child1, child2 = [parent1[0].copy(), -1, -1], [parent2[0].copy(), -1, -1]
-      while len(crossover_points) > 1:
-         point1 = crossover_points.pop()
-         point2 = crossover_points.pop()
-         child1[0][point1:point2] = parent2[0][point1:point2].copy()
-         child2[0][point1:point2] = parent1[0][point1:point2].copy()
+        child1, child2 = [parent1[0].copy(), -1, -1], [parent2[0].copy(), -1, -1]
+        while len(crossover_points) > 1:
+            point1 = crossover_points.pop()
+            point2 = crossover_points.pop()
+            child1[0][point1:point2] = parent2[0][point1:point2].copy()
+            child2[0][point1:point2] = parent1[0][point1:point2].copy()
 
-      return [child1, child2]
-
-   ###
-   #	Basic implementation of mutation operator
-   #	- mutations: number of mutations to make, at randomly selected positions
-   ###
-   def mutate_chromosome(self, chromosome, mutations=1):
-      for _ in range(mutations):
-         mutation_point = 0  # round(np.random.rand() * len(chromosome[0]))
-         mutation = np.floor(np.random.rand() * len(self.action_encoding))
-         chromosome[0][mutation_point] = mutation
+        return [child1, child2]
 
     ###
     # Implementation of mutation operator
