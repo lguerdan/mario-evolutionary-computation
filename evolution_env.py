@@ -22,7 +22,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
          offspring.extend(self.crossover_chromosome_pair(parent1, parent2))
 
       for chromosome in offspring:
-         self.mutate_chromosome(chromosome, mutations=5)
+         self.mutate_chromosome(chromosome, mutations=160)
 
       # Using only offspring to populate new generation here
       self.chromosomes = offspring
@@ -55,7 +55,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
 
       crossover_points = [point_range_max]
       for i in range(point_num):
-         crossover_points.append(round(point_range_max * random()))
+         crossover_points.append(int(round(point_range_max * random())))
       crossover_points.sort(reverse=True)
 
       child1, child2 = [parent1[0].copy(), -1, -1], [parent2[0].copy(), -1, -1]
@@ -74,5 +74,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
    def mutate_chromosome(self, chromosome, mutations=1):
       for _ in range(mutations):
          mutation_point = 0  # round(np.random.rand() * len(chromosome[0]))
-         mutation = round(np.random.rand() * len(self.action_encoding))
+         mutation = np.floor(np.random.rand() * len(self.action_encoding))
          chromosome[0][mutation_point] = mutation
+
+      chromosome[1], chromosome[2] = -1, -1
