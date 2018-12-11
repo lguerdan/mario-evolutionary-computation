@@ -84,6 +84,7 @@ class MSBGeneticOptimizerEnv(object):
          self.new_generation()
          self.evaluate_chromosomes()
          max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
+         avg_fitness = self.get_avg_chromosome_fitness()
 
          #If writing progress to output, add this generation
          if fname:
@@ -94,6 +95,7 @@ class MSBGeneticOptimizerEnv(object):
          print("\n#################################")
          print("GENERATION",gen,"COMPLETE")
          print("Highest chromosome: ",max_fitness_ix,", fitness:",max_fitness)
+         print("Average fitness: ", avg_fitness)
          print("####################################\n\n\n")
 
 
@@ -108,6 +110,13 @@ class MSBGeneticOptimizerEnv(object):
             max_fitness_ix = cix
 
       return max_fitness, max_fitness_ix
+
+   def get_avg_chromosome_fitness(self):
+      total_fitness = 0
+      for chromosome in self.chromosomes:
+         total_fitness += chromosome[1]
+
+      return int(total_fitness / len(self.chromosomes))
 
    @abstractmethod
    def new_generation(self):
