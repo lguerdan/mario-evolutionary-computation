@@ -21,6 +21,6 @@ optimizer.run_top_chromosome(render=True)
 #or call the load optimizer function directly. Note this will overwrite the current state
 
 #load the previous session and keep training
-optimizer2 = EvolutionEnv(session_file ="mario-4-chromosome.p")
-optimizer2.run_generations(1, 'fitness-values2.csv')
-optimizer2.save_optimizer('mario-4-chromosome2.p') #save to an updated file 
+# optimizer2 = EvolutionEnv(session_file ="mario-4-chromosome.p")
+# optimizer2.run_generations(1, 'fitness-values2.csv')
+# optimizer2.save_optimizer('mario-4-chromosome2.p') #save to an updated file 
