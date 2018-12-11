@@ -15,7 +15,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
       We will need to modify the chromosome structure in some
       """
         
-      #tournament selection for parent
+      # elite selection for parent
       parents = self.select_parents(1, int(self.num_chromosomes/2))
       offspring = []
 
@@ -41,7 +41,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
 
    ###
    #  Basic implementation of parent selection
-   #  - selection_type: 0: shuffle, 1: tournament
+   #  - selection_type: 0: shuffle, 1: elite
    #  - mu: number of parents to select
    ###
    def select_parents(self, selection_type=0, mu=1):
@@ -49,7 +49,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
          np.random.shuffle(self.chromosomes)
          return self.chromosomes[:mu]
 
-      def tournament_selection(mu):
+      def elite_selection(mu):
          parents = []
          # select mu best chromosomes
          best_chromosomes_index = sorted(range(len(self.chromosomes)), key=lambda x: self.chromosomes[x][1],
@@ -62,7 +62,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
       if selection_type == 0:
          return shuffle_selection()
       elif selection_type == 1:
-         return tournament_selection(mu)
+         return elite_selection(mu)
 
    def crossover_chromosome_pair(self, parent1, parent2, point_num=1, points_before_death=False, normal_dist=False):
       ###

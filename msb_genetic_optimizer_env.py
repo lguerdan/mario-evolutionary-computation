@@ -23,7 +23,7 @@ except:
 class MSBGeneticOptimizerEnv(object):
    """An environment wrapper for genetically optimizing mario smash brothers simulation ."""
 
-   def __init__(self, max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, fitness_strategy="x_pos", session_file="", world=1, stage=1, version=0, noFrameSkip=False):
+   def __init__(self, max_steps=3000, num_chromosomes=40, action_encoding=RIGHT_ONLY, render=False, fitness_strategy="x_pos", session_file="", world=1, stage=1, version=0, noFrameSkip=False):
       if session_file != "":
          self.load_optimizer(session_file)
       else:
@@ -70,7 +70,7 @@ class MSBGeneticOptimizerEnv(object):
 
    def run_generations(self, ngens, fname):
 
-      headers = ['generation', 'chromosome_num', self.fitness_strategy]
+      headers = ['generation', 'chromosome_num', self.fitness_strategy, 'avg_fitness']
 
       #If logging for the first time, set up csv file
       if fname:
@@ -90,7 +90,7 @@ class MSBGeneticOptimizerEnv(object):
          if fname:
             with open (fname, 'a') as csvfile:
                writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n',fieldnames=headers)
-               writer.writerow({'generation': gen, 'chromosome_num': max_fitness_ix, self.fitness_strategy: max_fitness})
+               writer.writerow({'generation': gen, 'chromosome_num': max_fitness_ix, self.fitness_strategy: max_fitness, 'avg_fitness': avg_fitness})
 
          print("\n#################################")
          print("GENERATION",gen,"COMPLETE")
