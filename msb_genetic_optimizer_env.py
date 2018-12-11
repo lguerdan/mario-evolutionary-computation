@@ -161,6 +161,8 @@ class MSBGeneticOptimizerEnv(object):
 
       with mariocontext(self) as env:
 
+         best_fitness_step = 0
+
          state = env.reset()
          #Main evaluation loop for this chromosome
          for step, action in enumerate(chromosome[0]):
@@ -168,8 +170,11 @@ class MSBGeneticOptimizerEnv(object):
             #take step
             state, reward, done, info = env.step(action)
 
+            if (info[self.fitness_strategy] > best_fitness_step):
+               best_fitness_step = step
+
             #died or level beat
-            if done:
+            if (done or info['flag_get']):
                break
 
             #print progress
@@ -180,7 +185,7 @@ class MSBGeneticOptimizerEnv(object):
             if self.render:
                env.render()
 
-         chromosome[1], chromosome[2] = info[self.fitness_strategy], step
+         chromosome[1], chromosome[2] = info[self.fitness_strategy], best_fitness_step
 
          print("chromosome",chromosome_num," done fitness ",self.fitness_strategy ,"= ",info[self.fitness_strategy])
          return chromosome
