@@ -44,7 +44,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
    #  - selection_type: 0: shuffle, 1: elite
    #  - mu: number of parents to select
    ###
-   def select_parents(self, selection_type=0, mu=1):
+   def select_parents(self, selection_type=1, mu=1):
       def shuffle_selection():
          np.random.shuffle(self.chromosomes)
          return self.chromosomes[:mu]

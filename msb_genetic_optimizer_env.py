@@ -143,12 +143,12 @@ class MSBGeneticOptimizerEnv(object):
       with mariocontext(self) as env:
          done = True
          for step, action in enumerate(self.chromosomes[max_fitness_ix][0]):
-               if done:
-                  state = env.reset()
 
-               state, reward, done, info = env.step(action)
+            state, reward, done, info = env.step(action)
+            if done or or info['flag_get']:
+               state = env.reset()
 
-               if render: env.render()
+            if render: env.render()
 
 
    def evaluate_chromosome(self, input_tuple):
