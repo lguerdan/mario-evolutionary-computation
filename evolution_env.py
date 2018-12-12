@@ -16,7 +16,7 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
       """
         
       # elite selection for parent
-      parents = self.select_parents(1, int(self.num_chromosomes/2))
+      parents = self.select_parents(3, int(self.num_chromosomes/2))
       offspring = []
 
       # Crossover
@@ -59,10 +59,44 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
             parents.append(self.chromosomes[best_chromosomes_index[i]])
          return parents
 
+      def linear_ranking_selection(mu):
+         parents = []
+         best_chromosomes_index = sorted(range(len(self.chromosomes)), key=lambda x: self.chromosomes[x][1], reverse=True)
+         s = []
+         s.append(0)
+         for i in range(self.num_chromosomes):
+            s.append(s[i]+((1.0/self.num_chromosomes)*(1.5-((i)/(self.num_chromosomes-1.0)))))
+         for i in range(mu):
+            r=s[self.num_chromosomes]*np.random.random_sample()
+            for i in range(self.num_chromosomes):
+               if s[i] <= r < s[i+1]:
+                  parents.append(self.chromosomes[best_chromosomes_index[self.num_chromosomes-(i+1)]])
+         return parents
+
+      def roulette_wheel_selection(mu):
+         parents = []
+         total=0
+         for i in range(self.num_chromosomes):
+            total=total+self.chromosomes[i][1];
+         s = []
+         s.append(0)
+         for i in range(self.num_chromosomes):
+            s.append(s[i]+((self.chromosomes[i][1])/(float)(total)))
+         for i in range(mu):
+            r=np.random.random_sample()
+            for i in range(self.num_chromosomes):
+               if s[i] <= r < s[i+1]:
+                  parents.append(self.chromosomes[i])
+         return parents
+
       if selection_type == 0:
          return shuffle_selection()
       elif selection_type == 1:
          return elite_selection(mu)
+      elif selection_type == 2:
+         return linear_ranking_selection(mu)
+      elif selection_type == 3:
+         return roulette_wheel_selection(mu)
 
    def crossover_chromosome_pair(self, parent1, parent2, point_num=1, points_before_death=False, normal_dist=False):
       ###
