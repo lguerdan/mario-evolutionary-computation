@@ -23,7 +23,7 @@ except:
 class MSBGeneticOptimizerEnv(object):
    """An environment wrapper for genetically optimizing mario smash brothers simulation ."""
 
-   def __init__(self, max_steps=10000, num_chromosomes=4, action_encoding=SIMPLE_MOVEMENT, render=False, fitness_strategy="x_pos", session_file="", world=1, stage=1, version=0, noFrameSkip=False):
+   def __init__(self, max_steps=3000, num_chromosomes=40, action_encoding=RIGHT_ONLY, render=False, fitness_strategy="x_pos", session_file="", world=1, stage=1, version=0, noFrameSkip=False):
       if session_file != "":
          self.load_optimizer(session_file)
       else:
@@ -70,7 +70,7 @@ class MSBGeneticOptimizerEnv(object):
 
    def run_generations(self, ngens, fname):
 
-      headers = ['generation', 'chromosome_num', self.fitness_strategy]
+      headers = ['generation', 'chromosome_num', self.fitness_strategy, 'avg_fitness']
 
       #If logging for the first time, set up csv file
       if fname:
@@ -84,16 +84,18 @@ class MSBGeneticOptimizerEnv(object):
          self.new_generation()
          self.evaluate_chromosomes()
          max_fitness, max_fitness_ix = self.get_max_fitness_chromosome()
+         avg_fitness = self.get_avg_chromosome_fitness()
 
          #If writing progress to output, add this generation
          if fname:
             with open (fname, 'a') as csvfile:
                writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n',fieldnames=headers)
-               writer.writerow({'generation': gen, 'chromosome_num': max_fitness_ix, self.fitness_strategy: max_fitness})
+               writer.writerow({'generation': gen, 'chromosome_num': max_fitness_ix, self.fitness_strategy: max_fitness, 'avg_fitness': avg_fitness})
 
          print("\n#################################")
          print("GENERATION",gen,"COMPLETE")
          print("Highest chromosome: ",max_fitness_ix,", fitness:",max_fitness)
+         print("Average fitness: ", avg_fitness)
          print("####################################\n\n\n")
 
 
@@ -108,6 +110,13 @@ class MSBGeneticOptimizerEnv(object):
             max_fitness_ix = cix
 
       return max_fitness, max_fitness_ix
+
+   def get_avg_chromosome_fitness(self):
+      total_fitness = 0
+      for chromosome in self.chromosomes:
+         total_fitness += chromosome[1]
+
+      return int(total_fitness / len(self.chromosomes))
 
    @abstractmethod
    def new_generation(self):
@@ -152,6 +161,8 @@ class MSBGeneticOptimizerEnv(object):
 
       with mariocontext(self) as env:
 
+         best_fitness_step = 0
+
          state = env.reset()
          #Main evaluation loop for this chromosome
          for step, action in enumerate(chromosome[0]):
@@ -159,8 +170,11 @@ class MSBGeneticOptimizerEnv(object):
             #take step
             state, reward, done, info = env.step(action)
 
+            if (info[self.fitness_strategy] > best_fitness_step):
+               best_fitness_step = step
+
             #died or level beat
-            if done:
+            if (done or info['flag_get']):
                break
 
             #print progress
@@ -171,7 +185,7 @@ class MSBGeneticOptimizerEnv(object):
             if self.render:
                env.render()
 
-         chromosome[1], chromosome[2] = info[self.fitness_strategy], step
+         chromosome[1], chromosome[2] = info[self.fitness_strategy], best_fitness_step
 
          print("chromosome",chromosome_num," done fitness ",self.fitness_strategy ,"= ",info[self.fitness_strategy])
          return chromosome

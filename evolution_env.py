@@ -15,17 +15,18 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
       We will need to modify the chromosome structure in some
       """
         
-      #tournament selection for parent
-      parents = self.select_parents(1, int(self.num_chromosomes/2))
+      # elite selection for parent
+      parents = self.select_parents(3, int(self.num_chromosomes/2))
       offspring = []
 
       # Crossover
-      #for (parent1, parent2) in parents:
-      #    offspring.extend(self.crossover_chromosome_pair(parent1, parent2, points_before_death=False))
+      for i in range(int(np.floor(len(parents) / 2))):
+         offspring.extend(self.crossover_chromosome_pair(parents[2 * i], parents[2 * i + 1],
+                              point_num=2, points_before_death=True, normal_dist=True))
 
       # Mutation
-      #using lambda = mu (numberof parents equal to the number of offsprings)
-      #For each selected parent, will mutate around 20% of the max_steps actions
+      # using lambda = mu (numberof parents equal to the number of offsprings)
+      # For each selected parent, will mutate around 20% of the max_steps actions
       mutations = round(0.2 * self.max_steps)
       for chromosome in parents:
          child = [chromosome[0].copy(), -1, chromosome[2]]
@@ -35,34 +36,68 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
       # (mu, lambda) Using only offspring to populate new generation here
       # self.chromosomes = offspring
 
-      #(mu + lambda) Using parents + offspring to populate new generation here
+      # (mu + lambda) Using parents + offspring to populate new generation here
       self.chromosomes = parents + offspring
 
    ###
-   # Basic implementation of parent selection, with chromosomes shuffled then returned in pairs
-   # Selection_type: 0: shuffle, 1: tournament
+   #  Basic implementation of parent selection
+   #  - selection_type: 0: shuffle, 1: elite
+   #  - mu: number of parents to select
    ###
    def select_parents(self, selection_type=0, mu=1):
       def shuffle_selection():
          np.random.shuffle(self.chromosomes)
+         return self.chromosomes[:mu]
+
+      def elite_selection(mu):
          parents = []
-         for i in range(int(len(self.chromosomes) / 2)):
-            parents.append((self.chromosomes[2 * i], self.chromosomes[2 * i + 1]))
-         return parents
-      def tournament_selection(mu):
-         parents = []
-         #select mu best chromosomes
-         best_chromosomes_index = sorted(range(len(self.chromosomes)), key=lambda x: self.chromosomes[x][1], reverse=True)
-         #delete from chromosome list if it is not within the mu best
+         # select mu best chromosomes
+         best_chromosomes_index = sorted(range(len(self.chromosomes)), key=lambda x: self.chromosomes[x][1],
+                                         reverse=True)
+         # delete from chromosome list if it is not within the mu best
          for i in range(mu):
             parents.append(self.chromosomes[best_chromosomes_index[i]])
+         return parents
+
+      def linear_ranking_selection(mu):
+         parents = []
+         best_chromosomes_index = sorted(range(len(self.chromosomes)), key=lambda x: self.chromosomes[x][1], reverse=True)
+         s = []
+         s.append(0)
+         for i in range(self.num_chromosomes):
+            s.append(s[i]+((1.0/self.num_chromosomes)*(1.5-((i)/(self.num_chromosomes-1.0)))))
+         for i in range(mu):
+            r=s[self.num_chromosomes]*np.random.random_sample()
+            for i in range(self.num_chromosomes):
+               if s[i] <= r < s[i+1]:
+                  parents.append(self.chromosomes[best_chromosomes_index[self.num_chromosomes-(i+1)]])
+         return parents
+
+      def roulette_wheel_selection(mu):
+         parents = []
+         total=0
+         for i in range(self.num_chromosomes):
+            total=total+self.chromosomes[i][1];
+         s = []
+         s.append(0)
+         for i in range(self.num_chromosomes):
+            s.append(s[i]+((self.chromosomes[i][1])/(float)(total)))
+         for i in range(mu):
+            r=np.random.random_sample()
+            for i in range(self.num_chromosomes):
+               if s[i] <= r < s[i+1]:
+                  parents.append(self.chromosomes[i])
          return parents
 
       if selection_type == 0:
          return shuffle_selection()
       elif selection_type == 1:
-         return tournament_selection(mu)
-        
+         return elite_selection(mu)
+      elif selection_type == 2:
+         return linear_ranking_selection(mu)
+      elif selection_type == 3:
+         return roulette_wheel_selection(mu)
+
    def crossover_chromosome_pair(self, parent1, parent2, point_num=1, points_before_death=False, normal_dist=False):
       ###
       #	Implementation of crossover functionality
@@ -71,13 +106,13 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
       #	- normal_dist: sample crossover points from normal distribution
       ###
       def positive_normal():
-         x = (np.random.randn() / 3)
-         return max(1 - max(x, -x), 0)
+         x = abs(np.random.randn() / 3)
+         return max(1 - x, 0)
 
       point_range_max = min(len(parent1[0]), len(parent2[0])) if not points_before_death \
-            else max(parent1[2], parent2[2])
+         else max(parent1[2], parent2[2])
       random = np.random.rand if not normal_dist else positive_normal
-        
+
       crossover_points = [point_range_max]
       for i in range(point_num):
          crossover_points.append(int(round(point_range_max * random())))
