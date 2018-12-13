@@ -145,8 +145,8 @@ class MSBGeneticOptimizerEnv(object):
          for step, action in enumerate(self.chromosomes[max_fitness_ix][0]):
 
             state, reward, done, info = env.step(action)
-            if done or or info['flag_get']:
-               state = env.reset()
+            if done or info['flag_get']:
+               return
 
             if render: env.render()
 
