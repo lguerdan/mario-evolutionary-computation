@@ -26,9 +26,9 @@ class EvolutionEnv(MSBGeneticOptimizerEnv):
 
       # Mutation
       # using lambda = mu (numberof parents equal to the number of offsprings)
-      # For each selected parent, will mutate around 20% of the max_steps actions
-      mutations = round(0.2 * self.max_steps)
       for chromosome in parents:
+         # For each selected parent, will mutate around 20% of genes until index of game over
+         mutations = round(0.2 * chromosome[2])
          child = [chromosome[0].copy(), -1, chromosome[2]]
          self.mutate_chromosome(child, mutations)
          offspring.append(child)
